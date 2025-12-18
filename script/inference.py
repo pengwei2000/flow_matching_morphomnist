@@ -9,13 +9,13 @@ import torch
 import matplotlib.pyplot as plt
 
 from config import *
-from model.unet import UNet
+from model.dit import DiT
 from model.diffusion import alphas, alphas_cumprod, variance
 
 def sample(model, cls, slant):
     model.eval()
     n_sample = len(cls)
-    x = torch.randn((n_sample, 1, IMG_SIZE, IMG_SIZE)).to(DEVICE)
+    x = torch.randn((n_sample, 1, 28, 28)).to(DEVICE)
     
     for t in reversed(range(T)):
         t_tensor = torch.full((n_sample,), t, dtype=torch.long).to(DEVICE)

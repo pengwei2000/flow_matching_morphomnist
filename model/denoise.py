@@ -3,9 +3,7 @@ from script.config import *
 from .diffusion import *
 import matplotlib.pyplot as plt
 from dataset import tensor_to_pil
-from lora import LoraLayer
-from torch import nn
-from lora import inject_lora
+
 
 def backward_denoise(model,batch_x_t,batch_cls):
     steps=[batch_x_t,]
@@ -42,41 +40,10 @@ def backward_denoise(model,batch_x_t,batch_cls):
 
 if __name__=='__main__':
     model=torch.load('model.pt')
-
-    USE_LORA=True
-
-    if USE_LORA:
-        for name,layer in model.named_modules():
-            name_cols=name.split('.')
-            filter_names=['w_q','w_k','w_v']
-            if any(n in name_cols for n in filter_names) and isinstance(layer,nn.Linear):
-                inject_lora(model,name,layer)
-
-        try:
-            restore_lora_state=torch.load('lora.pt')
-            model.load_state_dict(restore_lora_state,strict=False)
-        except:
-            pass 
-
-        model=model.to(DEVICE)
-
-        for name,layer in model.named_modules():
-            name_cols=name.split('.')
-
-            if isinstance(layer,LoraLayer):
-                children=name_cols[:-1]
-                cur_layer=model 
-                for child in children:
-                    cur_layer=getattr(cur_layer,child)  
-                lora_weight=(layer.lora_a@layer.lora_b)*layer.alpha/layer.r
-                before_weight=layer.raw_linear.weight.clone()
-                layer.raw_linear.weight=nn.Parameter(layer.raw_linear.weight.add(lora_weight.T)).to(DEVICE)
-                setattr(cur_layer,name_cols[-1],layer.raw_linear)
-    
     print(model)
 
     batch_size=10
-    batch_x_t=torch.randn(size=(batch_size,1,IMG_SIZE,IMG_SIZE))
+    batch_x_t=torch.randn(size=(batch_size,1,28,28))
     batch_cls=torch.arange(start=0,end=10,dtype=torch.long)
     steps=backward_denoise(model,batch_x_t,batch_cls)
     num_imgs=20

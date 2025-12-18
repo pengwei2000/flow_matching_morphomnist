@@ -14,7 +14,7 @@ import wandb
 from config import *
 from dataset import train_dataset
 from model.diffusion import forward_diffusion
-from model.unet import UNet
+from model.dit import DiT
 
 EPOCH = 50
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", 128))
@@ -38,7 +38,7 @@ try:
     model = torch.load("model.pt", map_location=DEVICE)
     model = model.to(DEVICE)
 except Exception:
-    model = UNet(1).to(DEVICE)
+    model = model=DiT(img_size=28,patch_size=4,channel=1,emb_size=64,label_num=10,dit_num=3,head=4).to(DEVICE)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 loss_fn = nn.MSELoss()
@@ -50,7 +50,6 @@ def init_wandb(model: nn.Module):
             "epochs": EPOCH,
             "batch_size": BATCH_SIZE,
             "learning_rate": LEARNING_RATE,
-            "image_size": IMG_SIZE,
             "timesteps": T,
             "device": DEVICE,
             "amp": USE_AMP,

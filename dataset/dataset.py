@@ -7,12 +7,10 @@ import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from script.config import IMG_SIZE
 from .dataset_io import load_idx
 
 pil_to_tensor = transforms.Compose(
     [
-        transforms.Resize((IMG_SIZE, IMG_SIZE)),
         transforms.ToTensor(),
     ]
 )
