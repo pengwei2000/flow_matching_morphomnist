@@ -1,0 +1,67 @@
+_wandb:
+    value:
+        cli_version: 0.23.1
+        e:
+            8aqwe6v650jg7csg4q9x5ombep3e8dzb:
+                codePath: script\train.py
+                codePathLocal: script\train.py
+                cpu_count: 8
+                cpu_count_logical: 16
+                cudaVersion: "12.5"
+                disk:
+                    /:
+                        total: "994364952576"
+                        used: "815796092928"
+                email: pengwei@stanford.edu
+                executable: C:\Users\18000\miniconda3\envs\cs224r\python.exe
+                gpu: NVIDIA GeForce RTX 4070 Laptop GPU
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Ada
+                      cudaCores: 4608
+                      memoryTotal: "8585740288"
+                      name: NVIDIA GeForce RTX 4070 Laptop GPU
+                      uuid: GPU-aba63d17-2cee-0f7c-c8e7-cb9f88b42f11
+                host: ROG_Pengwei
+                memory:
+                    total: "33601941504"
+                os: Windows-10-10.0.26100-SP0
+                program: C:\Users\18000\diffusion_morphomnist\script\train.py
+                python: CPython 3.11.11
+                root: C:\Users\18000\diffusion_morphomnist
+                startedAt: "2025-12-18T00:03:49.916293Z"
+                writerId: 8aqwe6v650jg7csg4q9x5ombep3e8dzb
+        m: []
+        python_version: 3.11.11
+        t:
+            "1":
+                - 1
+                - 41
+            "2":
+                - 1
+                - 41
+            "3":
+                - 1
+                - 2
+                - 16
+                - 61
+            "4": 3.11.11
+            "5": 0.23.1
+            "8":
+                - 3
+            "12": 0.23.1
+            "13": windows-amd64
+amp:
+    value: true
+batch_size:
+    value: 128
+device:
+    value: cuda
+epochs:
+    value: 150
+image_size:
+    value: 48
+learning_rate:
+    value: 0.0005
+timesteps:
+    value: 1000
