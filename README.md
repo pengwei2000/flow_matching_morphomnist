@@ -2,10 +2,12 @@
 
 This repository contains an implementation of a conditional denoising diffusion probabilistic model trained on the Morpho-MNIST dataset. The model leverages a UNet backbone augmented with cross-attention to incorporate two forms of conditioning: discrete digit identity and a continuous slant descriptor extracted from the morphological annotations.
 
+![Inference Result](inference_both.png)
+
 ## 1. Repository Layout
 
-- `config.py`: Global hyperparameters (image resolution, diffusion horizon, LoRA configuration, and device selection).
 - `dataset/`: Data loading utilities, including transforms for PIL↔Tensor conversion and a `MorphoMNISTDataset` class that reads the gzipped IDX files and morphological descriptors.
+- `script/config.py`: Global hyperparameters (image resolution, diffusion horizon, and device selection).
 - `model/`: Core model components such as the time-position embedding, cross-attention block, UNet backbone, diffusion utilities.
 - `script/train.py`: Training entry point with mixed-precision support and Weights & Biases logging.
 - `script/inference.py`: Sampling script demonstrating conditional generation under digit-only, slant-only, and joint conditioning regimes.
@@ -23,12 +25,9 @@ export WANDB_API_KEY=...         # optional, required for online logging
 python script/train.py
 ```
 
-Key training details:
-
-- The dataloader streams the full Morpho-MNIST training split with persistent workers for efficiency.
+Some notes:
 - Automatic mixed precision is enabled on CUDA devices; disable by forcing `DEVICE=cpu`.
 - Weights & Biases logging can be deactivated by setting `WANDB_MODE=offline` or `WANDB_DISABLED=true`.
-- Model checkpoints are written to `model.pt` after every epoch with an atomic rename.
 
 ## 4. Inference and Evaluation
 
@@ -43,4 +42,5 @@ The script loads `model.pt`, samples random noise vectors, and performs reverse 
 3. A two-dimensional grid spanning digits and slants.
 
 ## 5. Acknowledgement
-Most of the code in this repository is adapted from https://github.com/owenliang/pytorch-diffusion.
+The basic implementations of UNet and diffusion model are adapted from https://github.com/owenliang/pytorch-diffusion.
+The original paper for the Morpho-MNIST dataset: https://arxiv.org/pdf/1809.10780
