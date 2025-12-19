@@ -16,9 +16,9 @@ from dataset import train_dataset
 from model.diffusion import forward_diffusion
 from model.dit import DiT
 
-EPOCH = 50
-BATCH_SIZE = int(os.getenv("BATCH_SIZE", 128))
-LEARNING_RATE = 0.0005
+EPOCH = 500
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", 400))
+LEARNING_RATE = 0.001
 WANDB_PROJECT = "diffusion-morphomnist"
 
 dataloader = DataLoader(

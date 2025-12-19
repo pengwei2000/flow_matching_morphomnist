@@ -1,8 +1,8 @@
 from torch import nn 
 import torch 
-from time_emb import TimeEmbedding
-from dit_block import DiTBlock
-from config import T 
+from model.time_position_emb import TimePositionEmbedding
+from model.dit_block import DiTBlock
+from script.config import T 
 
 class DiT(nn.Module):
     def __init__(self,img_size,patch_size,channel,emb_size,label_num,dit_num,head):
@@ -19,7 +19,7 @@ class DiT(nn.Module):
         
         # time emb
         self.time_emb=nn.Sequential(
-            TimeEmbedding(emb_size),
+            TimePositionEmbedding(emb_size),
             nn.Linear(emb_size,emb_size),
             nn.ReLU(),
             nn.Linear(emb_size,emb_size)
@@ -45,13 +45,11 @@ class DiT(nn.Module):
         # label emb
         y_emb=self.label_emb(y) #   (batch,emb_size)
         # slant_emb
-        y_emb+=self.slant_emb(s) #   (batch,emb_size)
+        y_emb+=self.slant_emb(s.view(-1,1)) #   (batch,emb_size)
         # time emb
         t_emb=self.time_emb(t)  #   (batch,emb_size)
-        
         # condition emb
         cond=y_emb+t_emb
-        
         # patch emb
         x=self.conv(x)  # (batch,new_channel,patch_count,patch_count)
         x=x.permute(0,2,3,1)    # (batch,patch_count,patch_count,new_channel)

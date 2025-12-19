@@ -1,3 +1,3 @@
-from .unet import UNet
+from .dit import DiT
 
-__all__ = ["UNet"]
+__all__ = ["DiT"]
