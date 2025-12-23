@@ -7,7 +7,6 @@ This repository contains an implementation of a conditional diffusion transforme
 ## 1. Repository Layout
 
 - `dataset/`: Data loading utilities, including transforms for PIL↔Tensor conversion and a `MorphoMNISTDataset` class that reads the gzipped IDX files and morphological descriptors.
-- `script/config.py`: Global hyperparameters (image resolution, diffusion horizon, and device selection).
 - `model/`: Core model components such as the time-position embedding, diffusion utilities.
 - `script/train.py`: Training entry point with mixed-precision support and Weights & Biases logging.
 - `script/inference.py`: Sampling script demonstrating conditional generation under digit-only, slant-only, and joint conditioning regimes.

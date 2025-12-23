@@ -6,36 +6,28 @@ if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
 
 import torch
+import torchdiffeq
 import matplotlib.pyplot as plt
 
 from config import *
-from model.dit import DiT
-from model.diffusion import alphas, alphas_cumprod, variance
+
+steps=50
+method="dopri5"
+rtol=1e-5
+atol=1e-5
 
 def sample(model, cls, slant):
     model.eval()
     n_sample = len(cls)
     x = torch.randn((n_sample, 1, 28, 28)).to(DEVICE)
-    
-    for t in reversed(range(T)):
-        t_tensor = torch.full((n_sample,), t, dtype=torch.long).to(DEVICE)
-        with torch.no_grad():
-            predicted_noise = model(x, t_tensor, cls, slant)
-        
-        alpha_t = alphas[t].to(DEVICE)
-        alpha_cumprod_t = alphas_cumprod[t].to(DEVICE)
-        beta_t = 1 - alpha_t
-        
-        if t > 0:
-            noise = torch.randn_like(x)
-        else:
-            noise = torch.zeros_like(x)
-            
-        # x_{t-1} = 1/sqrt(alpha_t) * (x_t - (1-alpha_t)/sqrt(1-alpha_bar_t) * eps) + sigma * z
-        x = (1 / torch.sqrt(alpha_t)) * (x - (beta_t / torch.sqrt(1 - alpha_cumprod_t)) * predicted_noise) + torch.sqrt(variance[t].to(DEVICE)) * noise
-        
+    def ode_func(t, x):
+        t_expand = t.expand(x.size(0))  # [1] -> [num_samples]
+        v = model(x, t_expand, cls, slant)
+        return v
+    ts = torch.linspace(0, 1, steps).to(DEVICE)
+    x = torchdiffeq.odeint(ode_func, x, ts, method=method, rtol=rtol, atol=atol)[-1]
     x = (x.clamp(-1, 1) + 1) / 2 # Scale to [0, 1]
-    return x
+    return x.detach()
 
 if __name__ == "__main__":
     try:

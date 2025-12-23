@@ -13,7 +13,6 @@ import wandb
 
 from config import *
 from dataset import train_dataset
-from model.diffusion import forward_diffusion
 from model.dit import DiT
 
 EPOCH = 500
@@ -70,12 +69,13 @@ if __name__ == "__main__":
                 batch_x = batch_x.to(DEVICE) * 2 - 1
                 batch_cls = batch_cls.to(DEVICE)
                 batch_slant = batch_slant.to(DEVICE)
-                batch_t = torch.randint(0, T, (batch_x.size(0),)).to(DEVICE)
+                batch_t = torch.rand(batch_x.size(0), device=DEVICE)
+                batch_noise = torch.randn_like(batch_x)
+                xt = (1 - batch_t.view(-1, 1, 1, 1)) * batch_noise + batch_t.view(-1, 1, 1, 1) * batch_x
 
                 with autocast("cuda", enabled=USE_AMP):
-                    batch_x_t, batch_noise_t = forward_diffusion(batch_x, batch_t)
-                    batch_predict_t = model(batch_x_t, batch_t, batch_cls, batch_slant)
-                    loss = loss_fn(batch_predict_t, batch_noise_t)
+                    vt = model(xt, batch_t, batch_cls, batch_slant)
+                    loss = loss_fn(vt, batch_x - batch_noise)
 
                 optimizer.zero_grad(set_to_none=True)
                 if USE_AMP:
