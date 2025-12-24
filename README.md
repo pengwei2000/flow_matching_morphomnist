@@ -1,13 +1,13 @@
-# Conditional Diffusion Transformers (DiTs) on Morpho-MNIST
+# Conditional Flow Matching Transformers on Morpho-MNIST
 
-This repository contains an implementation of a conditional diffusion transformer model trained on the Morpho-MNIST dataset. The model incorporates two forms of conditioning: discrete digit identity and a continuous slant descriptor extracted from the morphological annotations.
+This repository contains an implementation of a conditional flow matching transformer model trained on the Morpho-MNIST dataset. The model incorporates two forms of conditioning: discrete digit identity and a continuous slant descriptor extracted from the morphological annotations.
 
 ![Inference Result](inference_both.png)
 
 ## 1. Repository Layout
 
 - `dataset/`: Data loading utilities, including transforms for PIL↔Tensor conversion and a `MorphoMNISTDataset` class that reads the gzipped IDX files and morphological descriptors.
-- `model/`: Core model components such as the time-position embedding, diffusion utilities.
+- `model/`: Core model components such as the time-position embedding, transformer backbone.
 - `script/train.py`: Training entry point with mixed-precision support and Weights & Biases logging.
 - `script/inference.py`: Sampling script demonstrating conditional generation under digit-only, slant-only, and joint conditioning regimes.
 
@@ -34,12 +34,11 @@ Some notes:
 python script/inference.py
 ```
 
-The script loads `model.pt`, samples random noise vectors, and performs reverse diffusion while conditioning on:
+The script loads `model.pt`, samples random noise vectors, and performs flow matching generation while conditioning on:
 
 1. All ten digit classes with zero slant.
 2. A fixed digit with a sweep across slant values.
 3. A two-dimensional grid spanning digits and slants.
 
 ## 5. Acknowledgement
-The basic implementation of DiT model is adapted from https://github.com/owenliang/mnist-dits.
 The original paper for the Morpho-MNIST dataset: https://arxiv.org/pdf/1809.10780
