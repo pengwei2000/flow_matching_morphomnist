@@ -6,7 +6,13 @@ This repository contains implementations of conditional generative models traine
 
 The models incorporate two forms of conditioning: discrete digit identity and a continuous slant descriptor extracted from the morphological annotations.
 
-![Inference Result](inference_both.png)
+### Inference Results
+
+**Conditional Flow Matching (CFM)**
+![CFM Inference Result](inference_both_cfm.png)
+
+**MeanFlow**
+![MeanFlow Inference Result](inference_both_mean_flow.png)
 
 ## 1. Repository Layout
 
