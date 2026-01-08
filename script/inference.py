@@ -6,10 +6,20 @@ if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
 
 import torch
-import torchdiffeq
+import torch
+try:
+    import torchdiffeq
+except ImportError:
+    torchdiffeq = None
 import matplotlib.pyplot as plt
 
 from config import *
+
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--method", type=str, default="cfm", choices=["cfm", "mean_flow"], help="Inference method: 'cfm' or 'mean_flow'")
+args = parser.parse_args()
 
 steps=50
 method="dopri5"
@@ -20,20 +30,33 @@ def sample(model, cls, slant):
     model.eval()
     n_sample = len(cls)
     x = torch.randn((n_sample, 1, 28, 28)).to(DEVICE)
-    def ode_func(t, x):
-        t_expand = t.expand(x.size(0))  # [1] -> [num_samples]
-        v = model(x, t_expand, cls, slant)
-        return v
-    ts = torch.linspace(0, 1, steps).to(DEVICE)
-    x = torchdiffeq.odeint(ode_func, x, ts, method=method, rtol=rtol, atol=atol)[-1]
+    
+    if args.method == "mean_flow":
+        # One-step generation
+        # t is irrelevant for MeanFlow model (use_time=False), but we pass a dummy
+        t_dummy = torch.zeros(n_sample).to(DEVICE) 
+        v = model(x, t_dummy, cls, slant)
+        x = x + v
+    else:
+        # ODE integration for CFM
+        if torchdiffeq is None:
+             raise ImportError("torchdiffeq is required for CFM inference. Please install it.")
+        def ode_func(t, x):
+            t_expand = t.expand(x.size(0))  # [1] -> [num_samples]
+            v = model(x, t_expand, cls, slant)
+            return v
+        ts = torch.linspace(0, 1, steps).to(DEVICE)
+        x = torchdiffeq.odeint(ode_func, x, ts, method=method, rtol=rtol, atol=atol)[-1]
+        
     x = (x.clamp(-1, 1) + 1) / 2 # Scale to [0, 1]
     return x.detach()
 
 if __name__ == "__main__":
+    model_name = f"model_{args.method}.pt"
     try:
-        model = torch.load("model.pt", map_location=DEVICE, weights_only=False)
+        model = torch.load(model_name, map_location=DEVICE, weights_only=False)
     except Exception as e:
-        print(f"Model not found or incompatible: {e}. Please train the model first.")
+        print(f"Model {model_name} not found or incompatible: {e}. Please train the model first.")
         exit()
         
     model.eval()
@@ -51,8 +74,8 @@ if __name__ == "__main__":
         plt.imshow(imgs_digit[i].cpu().squeeze(), cmap='gray')
         plt.axis('off')
         plt.title(f"{i}")
-    plt.savefig("inference_digit.png")
-    print("Saved inference_digit.png")
+    plt.savefig(f"inference_digit_{args.method}.png")
+    print(f"Saved inference_digit_{args.method}.png")
     
     # 2. Condition on slant (Digit = 5)
     digit_val = 5
@@ -68,8 +91,8 @@ if __name__ == "__main__":
         plt.imshow(imgs_slant[i].cpu().squeeze(), cmap='gray')
         plt.axis('off')
         plt.title(f"{slant_vals[i]:.2f}")
-    plt.savefig("inference_slant.png")
-    print("Saved inference_slant.png")
+    plt.savefig(f"inference_slant_{args.method}.png")
+    print(f"Saved inference_slant_{args.method}.png")
 
     # 3. Condition on both (Grid)
     print("Generating grid...")
@@ -92,5 +115,5 @@ if __name__ == "__main__":
                 plt.ylabel(f"{i}")
                 
     plt.tight_layout()
-    plt.savefig("inference_both.png")
-    print("Saved inference_both.png")
+    plt.savefig(f"inference_both_{args.method}.png")
+    print(f"Saved inference_both_{args.method}.png")

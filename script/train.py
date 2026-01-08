@@ -9,16 +9,27 @@ import torch
 from torch import nn
 from torch.amp import autocast
 from torch.utils.data import DataLoader
-import wandb
+try:
+    import wandb
+    if not hasattr(wandb, "init"):
+        wandb = None
+except ImportError:
+    wandb = None
 
 from config import *
 from dataset import train_dataset
 from model.dit import DiT
 
-EPOCH = 500
+import argparse
+
+EPOCH = int(os.getenv("EPOCH", 500))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", 400))
 LEARNING_RATE = 0.001
 WANDB_PROJECT = "diffusion-morphomnist"
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--method", type=str, default="cfm", choices=["cfm", "mean_flow"], help="Training method: 'cfm' or 'mean_flow'")
+args = parser.parse_args()
 
 dataloader = DataLoader(
     train_dataset,
@@ -33,19 +44,35 @@ torch.backends.cudnn.benchmark = True
 USE_AMP = torch.cuda.is_available() and DEVICE.startswith("cuda")
 scaler = torch.amp.GradScaler('cuda', enabled=USE_AMP)
 
+model_name = f"model_{args.method}.pt"
+use_time = (args.method == "cfm")
+
 try:
-    model = torch.load("model.pt", map_location=DEVICE)
+    model = torch.load(model_name, map_location=DEVICE)
     model = model.to(DEVICE)
 except Exception:
-    model = model=DiT(img_size=28,patch_size=4,channel=1,emb_size=64,label_num=10,dit_num=3,head=4).to(DEVICE)
+    model = DiT(
+        img_size=28,
+        patch_size=4,
+        channel=1,
+        emb_size=64,
+        label_num=10,
+        dit_num=3,
+        head=4,
+        use_time=use_time
+    ).to(DEVICE)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 loss_fn = nn.MSELoss()
 
 def init_wandb(model: nn.Module):
+    if wandb is None:
+        return None
     run = wandb.init(
         project=WANDB_PROJECT,
+        name=f"train_{args.method}",
         config={
+            "method": args.method,
             "epochs": EPOCH,
             "batch_size": BATCH_SIZE,
             "learning_rate": LEARNING_RATE,
@@ -87,19 +114,22 @@ if __name__ == "__main__":
                     optimizer.step()
 
                 last_loss = loss.item()
-                wandb.log(
-                    {
-                        "train/loss": last_loss,
-                        "train/epoch": epoch,
-                        "train/lr": optimizer.param_groups[0]["lr"],
-                    },
-                    step=n_iter,
-                )
+                if wandb is not None:
+                    wandb.log(
+                        {
+                            "train/loss": last_loss,
+                            "train/epoch": epoch,
+                            "train/lr": optimizer.param_groups[0]["lr"],
+                        },
+                        step=n_iter,
+                    )
                 n_iter += 1
 
             print("epoch:{} loss={}".format(epoch, last_loss))
-            wandb.log({"epoch": epoch, "epoch_loss": last_loss}, step=n_iter)
-            torch.save(model, "model.pt.tmp")
-            os.replace("model.pt.tmp", "model.pt")
+            if wandb is not None:
+                wandb.log({"epoch": epoch, "epoch_loss": last_loss}, step=n_iter)
+            torch.save(model, f"{model_name}.tmp")
+            os.replace(f"{model_name}.tmp", model_name)
     finally:
-        wandb.finish()
+        if wandb is not None:
+            wandb.finish()

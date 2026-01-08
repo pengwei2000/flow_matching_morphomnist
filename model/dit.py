@@ -5,12 +5,13 @@ from model.dit_block import DiTBlock
 from script.config import T 
 
 class DiT(nn.Module):
-    def __init__(self,img_size,patch_size,channel,emb_size,label_num,dit_num,head):
+    def __init__(self,img_size,patch_size,channel,emb_size,label_num,dit_num,head,use_time=True):
         super().__init__()
         
         self.patch_size=patch_size
         self.patch_count=img_size//self.patch_size
         self.channel=channel
+        self.use_time=use_time
         
         # patchify
         self.conv=nn.Conv2d(in_channels=channel,out_channels=channel*patch_size**2,kernel_size=patch_size,padding=0,stride=patch_size) 
@@ -18,12 +19,13 @@ class DiT(nn.Module):
         self.patch_pos_emb=nn.Parameter(torch.rand(1,self.patch_count**2,emb_size))
         
         # time emb
-        self.time_emb=nn.Sequential(
-            TimePositionEmbedding(emb_size),
-            nn.Linear(emb_size,emb_size),
-            nn.ReLU(),
-            nn.Linear(emb_size,emb_size)
-        )
+        if self.use_time:
+            self.time_emb=nn.Sequential(
+                TimePositionEmbedding(emb_size),
+                nn.Linear(emb_size,emb_size),
+                nn.ReLU(),
+                nn.Linear(emb_size,emb_size)
+            )
 
         # label emb
         self.label_emb=nn.Embedding(num_embeddings=label_num,embedding_dim=emb_size)
@@ -47,7 +49,10 @@ class DiT(nn.Module):
         # slant_emb
         y_emb+=self.slant_emb(s.view(-1,1)) #   (batch,emb_size)
         # time emb
-        t_emb=self.time_emb(t)  #   (batch,emb_size)
+        if self.use_time:
+            t_emb=self.time_emb(t)  #   (batch,emb_size)
+        else:
+            t_emb=0
         # condition emb
         cond=y_emb+t_emb
         # patch emb

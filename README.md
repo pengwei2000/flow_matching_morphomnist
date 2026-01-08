@@ -1,6 +1,10 @@
-# Conditional Flow Matching Transformers on Morpho-MNIST
+# Conditional Flow Matching and MeanFlow on Morpho-MNIST
 
-This repository contains an implementation of a conditional flow matching transformer model trained on the Morpho-MNIST dataset. The model incorporates two forms of conditioning: discrete digit identity and a continuous slant descriptor extracted from the morphological annotations.
+This repository contains implementations of conditional generative models trained on the Morpho-MNIST dataset. It supports two methods:
+1. **Conditional Flow Matching (CFM)**: A simulation-free continuous normalizing flow method.
+2. **MeanFlow**: A method for efficient one-step generation by learning the average velocity field.
+
+The models incorporate two forms of conditioning: discrete digit identity and a continuous slant descriptor extracted from the morphological annotations.
 
 ![Inference Result](inference_both.png)
 
@@ -21,7 +25,11 @@ Place the Morpho-MNIST assets (IDX images/labels and `*-morpho.csv` files) under
 ```bash
 pip install torch torchvision pandas matplotlib wandb
 export WANDB_API_KEY=...         # optional, required for online logging
-python script/train.py
+# Train Conditional Flow Matching (CFM) - Default
+python script/train.py --method cfm
+
+# Train MeanFlow (One-step generation)
+python script/train.py --method mean_flow
 ```
 
 Some notes:
@@ -31,7 +39,11 @@ Some notes:
 ## 4. Inference and Evaluation
 
 ```bash
-python script/inference.py
+# Inference with CFM model
+python script/inference.py --method cfm
+
+# Inference with MeanFlow model
+python script/inference.py --method mean_flow
 ```
 
 The script loads `model.pt`, samples random noise vectors, and performs flow matching generation while conditioning on:
