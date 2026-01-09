@@ -8,11 +8,11 @@ The models incorporate two forms of conditioning: discrete digit identity and a 
 
 ### Inference Results
 
-**Conditional Flow Matching (CFM)**
-![CFM Inference Result](inference_both_cfm.png)
+### Inference Results
 
-**MeanFlow**
-![MeanFlow Inference Result](inference_both_mean_flow.png)
+Comparison between **Conditional Flow Matching (CFM)** (ODE integration), **MeanFlow** (1-step), and **Rectified MeanFlow** (1-step after distillation).
+
+![Inference Comparison](inference_comparison.png)
 
 ## 1. Repository Layout
 
@@ -60,3 +60,23 @@ The script loads `model.pt`, samples random noise vectors, and performs flow mat
 
 ## 5. Acknowledgement
 The original paper for the Morpho-MNIST dataset: https://arxiv.org/pdf/1809.10780
+
+## 6. Rectified Flow Distillation (Improving MeanFlow)
+
+To improve the resolution of MeanFlow (1-step generation) while maintaining its speed, we can use **Rectified Flow** (or Reflow) to distill the high-quality CFM model into current MeanFlow model.
+
+1.  **Generate Rectified Dataset**: Use the trained CFM model to generate (noise, data) pairs connected by ODE trajectories.
+    ```bash
+    python script/distill.py --generate --teacher_path model_cfm.pt --save_path rectified_data.pt
+    ```
+
+2.  **Train Student MeanFlow**: Train the MeanFlow model on the rectified paths.
+    ```bash
+    python script/distill.py --train --save_path rectified_data.pt --student_path model_mean_flow_rectified.pt
+    ```
+
+3.  **Inference**:
+    You can then run inference with the new model directly:
+    ```bash
+    python script/inference.py --method mean_flow_rectified
+    ```

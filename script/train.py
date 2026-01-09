@@ -25,7 +25,7 @@ import argparse
 EPOCH = int(os.getenv("EPOCH", 500))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", 400))
 LEARNING_RATE = 0.001
-WANDB_PROJECT = "diffusion-morphomnist"
+WANDB_PROJECT = "flow-morphomnist"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--method", type=str, default="cfm", choices=["cfm", "mean_flow"], help="Training method: 'cfm' or 'mean_flow'")

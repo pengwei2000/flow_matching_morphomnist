@@ -6,7 +6,6 @@ if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
 
 import torch
-import torch
 try:
     import torchdiffeq
 except ImportError:
@@ -18,7 +17,8 @@ from config import *
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--method", type=str, default="cfm", choices=["cfm", "mean_flow"], help="Inference method: 'cfm' or 'mean_flow'")
+parser.add_argument("--method", type=str, default="cfm", choices=["cfm", "mean_flow", "mean_flow_rectified"], help="Inference method: 'cfm', 'mean_flow', or 'mean_flow_rectified'")
+parser.add_argument("--model_path", type=str, default=None, help="Path to model checkpoint. If None, defaults to model_{method}.pt")
 args = parser.parse_args()
 
 steps=50
@@ -31,7 +31,7 @@ def sample(model, cls, slant):
     n_sample = len(cls)
     x = torch.randn((n_sample, 1, 28, 28)).to(DEVICE)
     
-    if args.method == "mean_flow":
+    if args.method in ["mean_flow", "mean_flow_rectified"]:
         # One-step generation
         # t is irrelevant for MeanFlow model (use_time=False), but we pass a dummy
         t_dummy = torch.zeros(n_sample).to(DEVICE) 
@@ -52,7 +52,10 @@ def sample(model, cls, slant):
     return x.detach()
 
 if __name__ == "__main__":
-    model_name = f"model_{args.method}.pt"
+    if args.model_path is not None:
+        model_name = args.model_path
+    else:
+        model_name = f"model_{args.method}.pt"
     try:
         model = torch.load(model_name, map_location=DEVICE, weights_only=False)
     except Exception as e:
