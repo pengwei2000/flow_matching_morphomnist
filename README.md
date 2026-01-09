@@ -8,8 +8,6 @@ The models incorporate two forms of conditioning: discrete digit identity and a 
 
 ### Inference Results
 
-### Inference Results
-
 Comparison between **Conditional Flow Matching (CFM)** (ODE integration), **MeanFlow** (1-step), and **Rectified MeanFlow** (1-step after distillation).
 
 ![Inference Comparison](inference_comparison.png)
