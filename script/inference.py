@@ -33,10 +33,10 @@ def sample(model, cls, slant):
     
     if args.method in ["mean_flow", "mean_flow_rectified"]:
         # One-step generation
-        # t is irrelevant for MeanFlow model (use_time=False), but we pass a dummy
-        t_dummy = torch.zeros(n_sample).to(DEVICE) 
-        v = model(x, t_dummy, cls, slant)
-        x = x + v
+        t = torch.ones(n_sample).to(DEVICE)
+        h = t
+        v = model(x, t, cls, slant, h)
+        x = x - v
     else:
         # ODE integration for CFM
         if torchdiffeq is None:
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         exit()
         
     model.eval()
-    
+    print(f"whether model uses time: {model.use_time}")
     # 1. Condition on digit (Slant = 0)
     digits = torch.arange(10).to(DEVICE)
     slants = torch.zeros(10).to(DEVICE)

@@ -19,13 +19,13 @@ class DiT(nn.Module):
         self.patch_pos_emb=nn.Parameter(torch.rand(1,self.patch_count**2,emb_size))
         
         # time emb
-        if self.use_time:
-            self.time_emb=nn.Sequential(
-                TimePositionEmbedding(emb_size),
-                nn.Linear(emb_size,emb_size),
-                nn.ReLU(),
-                nn.Linear(emb_size,emb_size)
-            )
+        # Always init time_emb because it might be used for horizon (h) in MeanFlow
+        self.time_emb=nn.Sequential(
+            TimePositionEmbedding(emb_size),
+            nn.Linear(emb_size,emb_size),
+            nn.ReLU(),
+            nn.Linear(emb_size,emb_size)
+        )
 
         # label emb
         self.label_emb=nn.Embedding(num_embeddings=label_num,embedding_dim=emb_size)
@@ -43,7 +43,7 @@ class DiT(nn.Module):
         # linear back to patch
         self.linear=nn.Linear(emb_size,channel*patch_size**2)
         
-    def forward(self,x,t,y,s): # x:(batch,channel,height,width)   t:(batch,)  y:(batch, ) s:(batch, )
+    def forward(self,x,t,y,s,h=None): # x:(batch,channel,height,width)   t:(batch,)  y:(batch, ) s:(batch, ) h:(batch, )
         # label emb
         y_emb=self.label_emb(y) #   (batch,emb_size)
         # slant_emb
@@ -53,6 +53,13 @@ class DiT(nn.Module):
             t_emb=self.time_emb(t)  #   (batch,emb_size)
         else:
             t_emb=0
+        
+        # horizon emb
+        if h is not None:
+             # reuse time_emb for horizon
+             h_emb=self.time_emb(h)
+             t_emb = t_emb + h_emb
+
         # condition emb
         cond=y_emb+t_emb
         # patch emb

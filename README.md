@@ -56,10 +56,7 @@ The script loads `model.pt`, samples random noise vectors, and performs flow mat
 2. A fixed digit with a sweep across slant values.
 3. A two-dimensional grid spanning digits and slants.
 
-## 5. Acknowledgement
-The original paper for the Morpho-MNIST dataset: https://arxiv.org/pdf/1809.10780
-
-## 6. Rectified Flow Distillation (Improving MeanFlow)
+## 5. Rectified Flow Distillation
 
 To improve the resolution of MeanFlow (1-step generation) while maintaining its speed, we can use **Rectified Flow** (or Reflow) to distill the high-quality CFM model into current MeanFlow model.
 
@@ -78,3 +75,7 @@ To improve the resolution of MeanFlow (1-step generation) while maintaining its 
     ```bash
     python script/inference.py --method mean_flow_rectified
     ```
+
+## 6. Acknowledgement
+The original paper for the Morpho-MNIST dataset: https://arxiv.org/pdf/1809.10780
+
