@@ -17,7 +17,7 @@ from config import *
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--method", type=str, default="cfm", choices=["cfm", "mean_flow", "mean_flow_rectified"], help="Inference method: 'cfm', 'mean_flow', or 'mean_flow_rectified'")
+parser.add_argument("--method", type=str, default="cfm", choices=["cfm", "mean_flow", "simple_flow"], help="Inference method: 'cfm', 'mean_flow', or 'simple_flow'")
 parser.add_argument("--model_path", type=str, default=None, help="Path to model checkpoint. If None, defaults to model_{method}.pt")
 args = parser.parse_args()
 
@@ -37,7 +37,7 @@ def sample(model, cls, slant):
         h = t
         v = model(x, t, cls, slant, h)
         x = x - v
-    else:
+    elif args.method == "cfm":
         # ODE integration for CFM
         if torchdiffeq is None:
              raise ImportError("torchdiffeq is required for CFM inference. Please install it.")
@@ -47,7 +47,10 @@ def sample(model, cls, slant):
             return v
         ts = torch.linspace(0, 1, steps).to(DEVICE)
         x = torchdiffeq.odeint(ode_func, x, ts, method=method, rtol=rtol, atol=atol)[-1]
-        
+    elif args.method == "simple_flow":
+        t = torch.ones(n_sample).to(DEVICE)
+        v = model(x, t, cls, slant)
+        x = x + v
     x = (x.clamp(-1, 1) + 1) / 2 # Scale to [0, 1]
     return x.detach()
 

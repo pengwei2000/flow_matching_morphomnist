@@ -28,7 +28,7 @@ LEARNING_RATE = 0.002
 WANDB_PROJECT = "flow-morphomnist"
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--method", type=str, default="cfm", choices=["cfm", "mean_flow"], help="Training method: 'cfm' or 'mean_flow'")
+parser.add_argument("--method", type=str, default="cfm", choices=["cfm", "mean_flow", "simple_flow"], help="Training method: 'cfm' or 'mean_flow'")
 parser.add_argument("--P_mean_t", type=float, default=0.0)
 parser.add_argument("--P_std_t", type=float, default=1.0)
 parser.add_argument("--P_mean_r", type=float, default=0.0)
@@ -50,7 +50,7 @@ USE_AMP = torch.cuda.is_available() and DEVICE.startswith("cuda")
 scaler = torch.amp.GradScaler('cuda', enabled=USE_AMP)
 
 model_name = f"model_{args.method}.pt"
-use_time = True
+use_time = True if args.method in ["cfm", "mean_flow"] else False
 
 try:
     model = torch.load(model_name, map_location=DEVICE)
@@ -169,7 +169,7 @@ if __name__ == "__main__":
                         loss = loss / adp_wt
                         loss = loss.mean()
 
-                else:
+                elif args.method == "cfm":
                     # CFM Standard Training
                     batch_t = torch.rand(batch_x.size(0), device=DEVICE)
                     batch_noise = torch.randn_like(batch_x)
@@ -178,7 +178,13 @@ if __name__ == "__main__":
                     with autocast("cuda", enabled=USE_AMP):
                         vt = model(xt, batch_t, batch_cls, batch_slant)
                         loss = loss_fn(vt, batch_x - batch_noise)
+                elif args.method == "simple_flow":
+                    batch_t = torch.rand(batch_x.size(0), device=DEVICE)
+                    batch_noise = torch.randn_like(batch_x)
 
+                    with autocast("cuda", enabled=USE_AMP):
+                        vt = model(batch_noise, batch_t, batch_cls, batch_slant)
+                        loss = loss_fn(vt, batch_x - batch_noise)
                 optimizer.zero_grad(set_to_none=True)
                 if USE_AMP:
                     scaler.scale(loss).backward()

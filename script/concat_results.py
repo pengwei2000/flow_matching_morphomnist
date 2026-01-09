@@ -6,7 +6,7 @@ def concatenate_images():
     images = [
         ("inference_both_cfm.png", "CFM (ODE)"),
         ("inference_both_mean_flow.png", "MeanFlow (1-step)"),
-        ("inference_both_mean_flow_rectified.png", "Rectified MeanFlow (1-step)")
+        ("inference_both_simple_flow.png", "SimpleFlow (1-step)")
     ]
     
     loaded_imgs = []
